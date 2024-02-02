@@ -1,0 +1,12 @@
+Invalid character ';' at line number =16
+Invalid character '&' at line number =20
+Invalid character '.' at line number =22
+Invalid character ';' at line number =24
+Invalid character '!' at line number =35
+Invalid character '.' at line number =36
+Invalid character '!' at line number =39
+Invalid character '!' at line number =39
+
+
+ Done! Check the token.txt and symboltbl.txt file
+BUILD SUCCESSFUL (total time: 0 seconds)
