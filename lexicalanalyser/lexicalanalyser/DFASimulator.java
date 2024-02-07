@@ -49,24 +49,44 @@ public class DFASimulator {
 	 * @return
 	 * @throws Exception
 	 */
-	public State isAccepted(Collection<TransitionTable> tt, char[] sourceFileStream) throws Exception {
-		
-		//******************** YOUR CODE WILL GO HERE ***********************************************************
+	// IS ACCEPTED
 
-        TransitionTable transitionTable = new TransitionTable();
-        State s = transitionTable.getStartState();
-        while(!transitionTable.isFinal(s)){
-            transitionTable.move(s);
+public State isAccepted(Collection<TransitionTable> tt, char[] sourceFileStream) throws Exception {
+		// Initialize a dummy state
+		State currentState = new State(DFASimulator.DUMMY_STATE);
 
-        }
-		return null;
+		// Iterate through each transition table in the collection
+		for (TransitionTable table : tt) {
+			// Reset the current state to the start state of the current transition table
+			currentState = table.getStartState();
 
-	}
+			// Iterate through each character in the sourceFileStream
+			for (char c : sourceFileStream) {
+				// Skip whitespace characters
+				if (Character.isWhitespace(c)) {
+					continue;
+				}
 
-	public boolean isDummyState(State s) {
-		if (s.getCurrentStateName().equals(DUMMY_STATE)) {
-			return true;
+				// Find the next state based on the current state and character
+				State nextState = table.move(currentState, c);
+
+				// If no valid transition is found, break out of the loop
+				if (nextState == null) {
+					break;
+				}
+
+				// Update the current state
+				currentState = nextState;
+			}
+
+			// Check if the current state is an accepting state in the current transition
+			// table
+			if (table.isFinal(currentState)) {
+				return currentState;
+			}
 		}
-		return false;
+
+		// No accepting state found, return null
+		return null;
 	}
 }
