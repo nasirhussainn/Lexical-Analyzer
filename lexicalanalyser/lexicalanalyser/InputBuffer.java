@@ -147,46 +147,83 @@ public class InputBuffer {
 				System.err.println("Invalid character '" + buffer[fpoint] + "' at line number =" + (currentlineNumber+1));
 	}
 
-	private void findToken() {
-		try {
-			if (buffer[fpoint] == '\n') {
-				currentlineNumber++;
-				fpoint++;
-				return;
-			}
-
-			if (buffer[fpoint] == '\r'){
-				fpoint++;
-				return;
-			}
-			
-			DFASimulator dfaSimulator = new DFASimulator();
-			TransitionTableController tranistionController = TransitionTableController.getInstanceOf();
-			
-		//****************************YOUR CODE WILL GO HERE****************************************************************
-
-			State state = new State("LaibaState");
-			String state_name = state.getCurrentStateName();
-
-			TokenContainer tokenContainer = TokenContainer.getInstanceOf();
-			String buffer1 = String.valueOf(buffer[fpoint]);
-			tokenContainer.addToken(buffer1,buffer1,currentlineNumber);
-
-			tranistionController.getTransitionTables();
+	// FIND TOKEN
 
 
+    private void findToken() {
+	    try {
+	        if (buffer[fpoint] == '\n') {
+	            currentlineNumber++;
+	            fpoint++;
+	            return;
+	        }
 
+	        if (buffer[fpoint] == '\r'){
+	            fpoint++;
+	            return;
+	        }
 
+	        // Skip whitespace characters
+	        if (Character.isWhitespace(buffer[fpoint])) {
+	            fpoint++;
+	            return;
+	        }
 
+	        // Check for comments (lines starting with "//")
+	        if (buffer[fpoint] == '/' && buffer[fpoint + 1] == '/') {
+	            while (buffer[fpoint] != '\n' && buffer[fpoint] != Main.EOF) {
+	                fpoint++;
+	            }
+	            return;
+	        }
 
+	        // Create a cache to store the token
+	        int cacheIndex = 0;
 
+	        // Iterate through the buffer to extract the token
+	        while (fpoint < SIZE_OF_BUFFER && cacheIndex < MAX_TOKEN_SIZE_ALLOWED
+	                && buffer[fpoint] != Main.EOF && !Character.isWhitespace(buffer[fpoint])) {
+	            // Add the character to the cache
+	            cache[cacheIndex++] = buffer[fpoint++];
+	        }
 
+	        // Check if we are at the end of the buffer and still haven't found a complete token
+	        if (fpoint == SIZE_OF_BUFFER || buffer[fpoint] == Main.EOF) {
+	            // Handle the case when a token spans two buffers
+	            if (lpoint != 0) {
+	                // Copy the cache to the beginning of the buffer
+	                System.arraycopy(cache, 0, buffer, 0, cacheIndex);
+	                fillIndex = cacheIndex;
+	                lpoint = 0;
+	            }
+	            // If the buffer is exhausted, we should reset the buffer
+	            buffer = new char[SIZE_OF_BUFFER];
+	            fillIndex = 0;
+	            return;
+	        }
 
+	        // Process the token using the DFA simulator
+	        char[] tokenChars = new char[cacheIndex];
+	        System.arraycopy(cache, 0, tokenChars, 0, cacheIndex);
 
-		} catch (Exception exception) {
-			System.out.println("Exception Occured!!! " + exception);
-		}
+	        DFASimulator dfaSimulator = new DFASimulator();
+	        TransitionTableController transitionController = TransitionTableController.getInstanceOf();
+	        Collection<TransitionTable> transitionTables = transitionController.getTransitionTables();
 
+	        // Check if the token is accepted by the DFA simulator
+	        State acceptedState = dfaSimulator.isAccepted(transitionTables, tokenChars);
+
+	        if (acceptedState != null) {
+	            // Token is accepted, so extract and store it
+	            String tokenValue = new String(tokenChars, 0, cacheIndex);
+	            tokenContainer.addToken(tokenValue, acceptedState.getCurrentStateName(), currentlineNumber);
+	        } else {
+	            // Token is not accepted, print an error
+	            printError();
+	        }
+	    } catch (Exception exception) {
+	        System.out.println("Exception Occurred: " + exception);
+	    }
 	}
 
 	private void printBuffer() {
